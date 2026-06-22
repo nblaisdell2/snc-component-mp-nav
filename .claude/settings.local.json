@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(snc ui-component deploy 2>&1)"
+    ]
+  }
+}

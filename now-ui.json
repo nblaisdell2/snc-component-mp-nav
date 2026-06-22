@@ -1,0 +1,221 @@
+{
+  "components": {
+    "x-1295779-metrics-nav-uic": {
+      "innerComponents": [],
+      "uiBuilder": {
+        "associatedTypes": [
+          "global.core",
+          "global.landing-page"
+        ],
+        "label": "Metrics Nav",
+        "tileIcon": "./tile-icon/generic-tile-icon.svg",
+        "description": "Config-driven navigation bar for the Metrics Portal. Binds to the active Dashboard records (ordered by nav_order, optionally grouped by nav_group), highlights the current dashboard, and emits a Navigate event when an item is clicked. Adding a Dashboard record automatically adds a nav entry — no UI Builder authoring.",
+        "category": "primitives"
+      },
+      "properties": [
+        {
+          "name": "dashboards",
+          "label": "Data · Dashboards",
+          "description": "Hierarchical array of active dashboards. Each top-level item is a nav bar entry: { key, title (or name), nav_group, nav_order, icon, active, children }. An item's optional `children` array (sub-dashboards) is shown in a popup when its parent is hovered. Bind to the /nav Data Resource (active dashboards, order by nav_order). Leave empty to show built-in sample items.",
+          "fieldType": "json"
+        },
+        {
+          "name": "currentKey",
+          "label": "Data · Current key",
+          "description": "The key of the dashboard currently being viewed. Bind to the generic page's route param so the matching nav item is highlighted.",
+          "fieldType": "string",
+          "defaultValue": ""
+        },
+        {
+          "name": "orientation",
+          "label": "Layout · Orientation",
+          "description": "Horizontal = a top nav bar. Vertical = a stacked sidebar.",
+          "fieldType": "choice",
+          "defaultValue": "horizontal",
+          "typeMetadata": {
+            "variant": "dropdown",
+            "choices": [
+              { "label": "Horizontal (top bar)", "value": "horizontal" },
+              { "label": "Vertical (sidebar)", "value": "vertical" }
+            ]
+          }
+        },
+        {
+          "name": "groupByCategory",
+          "label": "Layout · Group by nav group",
+          "description": "Group nav items by their nav_group value. Off = one flat list ordered by nav_order.",
+          "fieldType": "boolean",
+          "defaultValue": false
+        },
+        {
+          "name": "showGroupLabels",
+          "label": "Layout · Show group labels",
+          "description": "When grouping is on, show the nav_group name as a heading above each group.",
+          "fieldType": "boolean",
+          "defaultValue": true
+        },
+        {
+          "name": "showIcons",
+          "label": "Layout · Show icons",
+          "description": "Show a small marker for items that have an icon set. (Decorative dot; swap for your icon system if desired.)",
+          "fieldType": "boolean",
+          "defaultValue": false
+        },
+        {
+          "name": "itemAlignment",
+          "label": "Layout · Item alignment",
+          "description": "Horizontal placement of the nav items. Center aligns them in the middle of the bar (sidebar: cross-axis). The logo always stays pinned to the far-left/top.",
+          "fieldType": "choice",
+          "defaultValue": "center",
+          "typeMetadata": {
+            "variant": "dropdown",
+            "choices": [
+              { "label": "Left", "value": "left" },
+              { "label": "Center", "value": "center" },
+              { "label": "Right", "value": "right" }
+            ]
+          }
+        },
+        {
+          "name": "showLogo",
+          "label": "Logo · Show logo",
+          "description": "Show the brand logo at the far-left (top, in vertical layout). Turn off for experiences that supply their own header.",
+          "fieldType": "boolean",
+          "defaultValue": true
+        },
+        {
+          "name": "logoText",
+          "label": "Logo · Text",
+          "description": "Wordmark shown as the logo. Defaults to \"Metrics Portal\"; override per experience. Leave blank (and set no image) to hide the logo.",
+          "fieldType": "string",
+          "defaultValue": "Metrics Portal"
+        },
+        {
+          "name": "logoImageUrl",
+          "label": "Logo · Image URL",
+          "description": "Optional logo image (e.g. an instance attachment or db_image URL). Rendered before the text; leave blank for a text-only wordmark.",
+          "fieldType": "string",
+          "defaultValue": ""
+        },
+        {
+          "name": "logoImageAlt",
+          "label": "Logo · Image alt text",
+          "description": "Accessible alt text for the logo image. Falls back to the logo text when blank.",
+          "fieldType": "string",
+          "defaultValue": ""
+        },
+        {
+          "name": "logoImageHeight",
+          "label": "Logo · Image height",
+          "description": "Rendered height of the logo image. CSS length; a bare number is treated as pixels.",
+          "fieldType": "string",
+          "defaultValue": "24px"
+        },
+        {
+          "name": "brandLabel",
+          "label": "Layout · Brand label",
+          "description": "Optional title/brand text rendered before the nav items. Leave blank to hide.",
+          "fieldType": "string",
+          "defaultValue": ""
+        },
+        {
+          "name": "emptyMessage",
+          "label": "Layout · Empty message",
+          "description": "Text shown when there are no active dashboards to display.",
+          "fieldType": "string",
+          "defaultValue": "No dashboards configured."
+        },
+        {
+          "name": "ariaLabel",
+          "label": "Accessibility · Aria label",
+          "description": "Accessible label for the nav landmark, announced by screen readers.",
+          "fieldType": "string",
+          "defaultValue": "Metrics navigation"
+        },
+        {
+          "name": "backgroundColor",
+          "label": "Style · Background color",
+          "description": "Nav background. CSS color or \"transparent\".",
+          "fieldType": "string",
+          "defaultValue": "transparent"
+        },
+        {
+          "name": "textColor",
+          "label": "Style · Text color",
+          "description": "Color of inactive nav item text.",
+          "fieldType": "string",
+          "defaultValue": "#374151"
+        },
+        {
+          "name": "activeBackgroundColor",
+          "label": "Style · Active background",
+          "description": "Background color of the currently-selected nav item.",
+          "fieldType": "string",
+          "defaultValue": "#2E93fA"
+        },
+        {
+          "name": "activeTextColor",
+          "label": "Style · Active text color",
+          "description": "Text color of the currently-selected nav item.",
+          "fieldType": "string",
+          "defaultValue": "#ffffff"
+        },
+        {
+          "name": "popupBackgroundColor",
+          "label": "Style · Popup background",
+          "description": "Background color of the children popup shown when hovering a parent nav item.",
+          "fieldType": "string",
+          "defaultValue": "#ffffff"
+        },
+        {
+          "name": "itemGap",
+          "label": "Style · Item gap",
+          "description": "Gap between nav items. CSS length; a bare number is treated as pixels.",
+          "fieldType": "string",
+          "defaultValue": "4px"
+        },
+        {
+          "name": "itemRadius",
+          "label": "Style · Item corner radius",
+          "description": "Rounded corners of each nav item. CSS length; a bare number is treated as pixels.",
+          "fieldType": "string",
+          "defaultValue": "6px"
+        },
+        {
+          "name": "itemPadding",
+          "label": "Style · Item padding",
+          "description": "Padding inside each nav item, e.g. \"8px 12px\".",
+          "fieldType": "string",
+          "defaultValue": "8px 12px"
+        },
+        {
+          "name": "fontSize",
+          "label": "Style · Font size",
+          "description": "Font size of nav item text. CSS length; a bare number is treated as pixels.",
+          "fieldType": "string",
+          "defaultValue": "14px"
+        },
+        {
+          "name": "fontFamily",
+          "label": "Style · Font family",
+          "description": "CSS font-family for the nav. Blank = inherit from the page.",
+          "fieldType": "string",
+          "defaultValue": ""
+        }
+      ],
+      "actions": [
+        {
+          "name": "NAVIGATE",
+          "label": "Navigate",
+          "description": "Fired when a nav item is clicked. Wire this to route the generic dashboard page to the selected key.",
+          "payload": [
+            { "name": "key", "label": "Dashboard key", "description": "The URL slug/key of the clicked dashboard." },
+            { "name": "title", "label": "Dashboard title", "description": "The display title of the clicked dashboard." },
+            { "name": "navGroup", "label": "Nav group", "description": "The nav_group of the clicked dashboard (may be blank)." }
+          ]
+        }
+      ]
+    }
+  },
+  "scopeName": "x_1295779_nav_0"
+}
