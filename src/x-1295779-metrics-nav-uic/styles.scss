@@ -35,8 +35,9 @@
 	white-space: nowrap;
 }
 
-/* Horizontal: logo at the far-left, the items wrapper fills the rest so the
-   nav items can be aligned (left/center/right) within that space. */
+/* Horizontal: three zones — start (logo/brand), items, end (spacer). The two
+   side zones let the items center against the WHOLE bar (not just the space to
+   the right of the logo) when center alignment is selected. */
 .mn-root--horizontal {
 	display: flex;
 	flex-wrap: nowrap;
@@ -44,25 +45,51 @@
 	gap: 12px;
 }
 
+.mn-root--horizontal .mn-start {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex: 0 0 auto;
+}
+
+/* The end spacer only exists to balance the start zone for center alignment. */
+.mn-root--horizontal .mn-end {
+	display: none;
+}
+
 .mn-root--horizontal .mn-items {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 12px;
-	flex: 1 1 auto;
 	min-width: 0;
 }
 
-.mn-root--horizontal .mn-items--left {
+/* Left / right: items take the space beside the logo and align to that edge. */
+.mn-root--horizontal.mn-align-left .mn-items {
+	flex: 1 1 auto;
 	justify-content: flex-start;
 }
 
-.mn-root--horizontal .mn-items--center {
-	justify-content: center;
+.mn-root--horizontal.mn-align-right .mn-items {
+	flex: 1 1 auto;
+	justify-content: flex-end;
 }
 
-.mn-root--horizontal .mn-items--right {
-	justify-content: flex-end;
+/* Center: start + end are equal flexible spacers, so items sit dead-center
+   regardless of the logo's width. */
+.mn-root--horizontal.mn-align-center .mn-start,
+.mn-root--horizontal.mn-align-center .mn-end {
+	display: flex;
+	flex: 1 1 0;
+	/* No min-width:0 here on purpose — the start zone must not shrink below the
+	   logo's width, otherwise wide item sets would overlap the logo in a narrow
+	   bar. The empty end zone has no content, so it still collapses to 0. */
+}
+
+.mn-root--horizontal.mn-align-center .mn-items {
+	flex: 0 1 auto;
+	justify-content: center;
 }
 
 .mn-root--horizontal .mn-group {
@@ -85,6 +112,16 @@
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
+}
+
+.mn-root--vertical .mn-start {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.mn-root--vertical .mn-end {
+	display: none;
 }
 
 .mn-root--vertical .mn-items {
@@ -145,9 +182,8 @@
 	outline-offset: 2px;
 }
 
-.mn-link--active {
-	font-weight: 600;
-}
+/* Active state is conveyed by the active background/text color (set inline from
+   properties); font weight follows the configurable `fontWeight`. */
 
 /* Top-level group trigger: looks like a link but is a non-navigable <button>
    that only opens the group popup. Reset the native button chrome. */
@@ -157,6 +193,10 @@
 	background: transparent;
 	font: inherit;
 	color: inherit;
+	/* <button> doesn't inherit these from ancestors by default (UA resets them on
+	   form controls), so opt back in to honor the configurable text styling. */
+	text-transform: inherit;
+	letter-spacing: inherit;
 }
 
 .mn-empty {
@@ -281,9 +321,8 @@
 	outline-offset: -2px;
 }
 
-.mn-popup-link--active {
-	font-weight: 600;
-}
+/* Active popup links are marked by the active background/text color; weight
+   follows the configurable `fontWeight`. */
 
 /* Popup rows stack their (optional) inline children beneath the link, and are
    the positioning anchor for a flyout sub-popup. */

@@ -224,6 +224,46 @@
           "defaultValue": "14px"
         },
         {
+          "name": "fontWeight",
+          "label": "Style · Font weight",
+          "description": "Weight of the nav item text. Use Bold (or Semibold) to make the nav stand out.",
+          "fieldType": "choice",
+          "defaultValue": "normal",
+          "typeMetadata": {
+            "variant": "dropdown",
+            "choices": [
+              { "label": "Normal (400)", "value": "normal" },
+              { "label": "Medium (500)", "value": "500" },
+              { "label": "Semibold (600)", "value": "600" },
+              { "label": "Bold (700)", "value": "bold" },
+              { "label": "Extra bold (800)", "value": "800" }
+            ]
+          }
+        },
+        {
+          "name": "textTransform",
+          "label": "Style · Text transform",
+          "description": "Letter casing of the nav item text.",
+          "fieldType": "choice",
+          "defaultValue": "none",
+          "typeMetadata": {
+            "variant": "dropdown",
+            "choices": [
+              { "label": "None", "value": "none" },
+              { "label": "UPPERCASE", "value": "uppercase" },
+              { "label": "Capitalize", "value": "capitalize" },
+              { "label": "lowercase", "value": "lowercase" }
+            ]
+          }
+        },
+        {
+          "name": "letterSpacing",
+          "label": "Style · Letter spacing",
+          "description": "Spacing between letters of the nav item text. CSS length (e.g. \"0.5px\", \"0.05em\") or \"normal\".",
+          "fieldType": "string",
+          "defaultValue": "normal"
+        },
+        {
           "name": "fontFamily",
           "label": "Style · Font family",
           "description": "CSS font-family for the nav. Blank = inherit from the page.",

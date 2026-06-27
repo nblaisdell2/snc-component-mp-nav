@@ -117,6 +117,9 @@ const view = (state, { dispatch }) => {
 		color: p.textColor || '#374151',
 		fontFamily: p.fontFamily || 'inherit',
 		fontSize: cssLen(p.fontSize, '14px'),
+		fontWeight: p.fontWeight || 'normal',
+		textTransform: p.textTransform || 'none',
+		letterSpacing: cssLen(p.letterSpacing, 'normal'),
 		borderBottomStyle: 'solid',
 		borderBottomWidth: cssLen(p.borderBottomWidth, '1px'),
 		borderBottomColor: p.borderBottomColor || 'transparent',
@@ -286,12 +289,17 @@ const view = (state, { dispatch }) => {
 
 	return (
 		<nav
-			className={`mn-root mn-root--${horizontal ? 'horizontal' : 'vertical'}`}
+			className={`mn-root mn-root--${horizontal ? 'horizontal' : 'vertical'} mn-align-${alignment}`}
 			style={rootStyle}
 			aria-label={p.ariaLabel || 'Metrics navigation'}
 		>
-			{renderLogo()}
-			{p.brandLabel ? <div className="mn-brand">{p.brandLabel}</div> : null}
+			{/* Start zone (logo + brand). In center alignment it is a flex spacer
+			    that balances `.mn-end`, so items center against the whole bar —
+			    not just the space to the right of the logo. */}
+			<div className="mn-start">
+				{renderLogo()}
+				{p.brandLabel ? <div className="mn-brand">{p.brandLabel}</div> : null}
+			</div>
 			<div className={`mn-items mn-items--${alignment}`}>
 				{empty ? (
 					<div className="mn-empty">{p.emptyMessage || 'No dashboards configured.'}</div>
@@ -301,6 +309,8 @@ const view = (state, { dispatch }) => {
 					</ul>
 				)}
 			</div>
+			{/* Empty spacer mirroring `.mn-start` so center alignment is symmetric. */}
+			<div className="mn-end" aria-hidden="true" />
 		</nav>
 	);
 };
@@ -337,6 +347,9 @@ createCustomElement('x-1295779-metrics-nav-uic', {
 		itemRadius: { default: '6px' },
 		itemPadding: { default: '8px 12px' },
 		fontSize: { default: '14px' },
+		fontWeight: { default: 'normal' },
+		textTransform: { default: 'none' },
+		letterSpacing: { default: 'normal' },
 		fontFamily: { default: '' }
 	}
 });
