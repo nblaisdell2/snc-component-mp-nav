@@ -11,6 +11,13 @@ import { SAMPLE_DASHBOARDS } from './sampleData';
  * the route param. Clicking an item dispatches NAVIGATE({ key }); the page wires
  * that to route the generic dashboard page (build spec §7 / §11).
  *
+ * Information architecture: the TOP-LEVEL nav items are the `nav_group` values.
+ * A group is NOT navigable — it only opens a popup listing the dashboards in that
+ * group (and each dashboard's `children`). Dashboards with no nav_group are
+ * hidden. `childDisplayMode` chooses how sub-pages (children) are shown:
+ *   - 'inline'  — children always shown, indented beneath their parent dashboard
+ *   - 'flyout'  — first popup shows titles only; children open in a secondary popup
+ *
  * Rendered declaratively with snabbdom — the view reads `state.properties`, so it
  * re-renders automatically whenever a UI Builder property changes (no imperative
  * lifecycle handlers needed, unlike the D3 chart components).
@@ -30,7 +37,7 @@ const isActive = (d) =>
 /**
  * Normalize a Dashboard record (snake_case or camelCase) into the nav's shape.
  * `children` (sub-dashboards from the hierarchical /nav endpoint) are normalized
- * recursively so a parent item can render its children in a hover popup.
+ * recursively so a dashboard can render its children in the popup hierarchy.
  */
 const normalize = (d) => ({
 	key: d.key != null ? String(d.key) : '',
@@ -51,36 +58,71 @@ const normalizeList = (list) => {
 	return items;
 };
 
-/** Ordered, optionally-grouped model of the top-level (root) nav items. */
-const buildModel = (dashboards, groupByCategory) => {
-	const items = normalizeList(dashboards);
-	if (!groupByCategory) return [{ label: '', items }];
+/**
+ * Build the top-level groups: dashboards bucketed by `navGroup`. Dashboards with
+ * no nav_group are hidden. Items within a group are ordered by nav_order; groups
+ * themselves are ordered by their lowest nav_order, tie-broken by the order they
+ * first appear in the data. Each group is `{ label, items }` and every item keeps
+ * its `children` (already sorted by `normalize`).
+ */
+const buildGroups = (dashboards) => {
+	const items = asArray(dashboards)
+		.filter((d) => d && isActive(d))
+		.map(normalize)
+		.filter((d) => d.key);
 	const groups = [];
 	const byLabel = Object.create(null);
 	items.forEach((it) => {
 		const label = it.navGroup || '';
+		if (!label) return; // hide ungrouped dashboards
 		if (!byLabel[label]) {
-			byLabel[label] = { label, items: [] };
+			byLabel[label] = { label, items: [], order: it.navOrder, seq: groups.length };
 			groups.push(byLabel[label]);
+		} else {
+			byLabel[label].order = Math.min(byLabel[label].order, it.navOrder);
 		}
 		byLabel[label].items.push(it);
 	});
+	groups.forEach((g) =>
+		g.items.sort((a, b) => a.navOrder - b.navOrder || a.title.localeCompare(b.title))
+	);
+	groups.sort((a, b) => a.order - b.order || a.seq - b.seq);
 	return groups;
 };
+
+/** True when `key` matches any dashboard or descendant child in `items`. */
+const anyActive = (items, key) =>
+	asArray(items).some((it) => it.key === key || anyActive(it.children, key));
 
 const view = (state, { dispatch }) => {
 	const p = state.properties;
 	const dashboards = asArray(p.dashboards).length ? p.dashboards : SAMPLE_DASHBOARDS;
-	const groups = buildModel(dashboards, p.groupByCategory);
+	const groups = buildGroups(dashboards);
 	const horizontal = p.orientation !== 'vertical';
 	const current = p.currentKey != null ? String(p.currentKey) : '';
-	const empty = groups.every((g) => !g.items.length);
+	const empty = groups.length === 0;
+	const flyout = p.childDisplayMode === 'flyout';
+
+	// Inline mode wraps a group's dashboards into columns of at most this many
+	// items, so a large group reads across the popup instead of scrolling.
+	const colSize = Math.max(1, parseInt(p.inlineColumnSize, 10) || 8);
+	const lineColor = p.childLineColor || '#d1d5db';
+
+	// An item is highlighted when it IS the current page or an ANCESTOR of it, so
+	// the whole path (group → dashboard → child) reads as selected.
+	const onPath = (item) => item.key === current || anyActive(item.children, current);
 
 	const rootStyle = {
 		background: p.backgroundColor || 'transparent',
 		color: p.textColor || '#374151',
 		fontFamily: p.fontFamily || 'inherit',
-		fontSize: cssLen(p.fontSize, '14px')
+		fontSize: cssLen(p.fontSize, '14px'),
+		borderBottomStyle: 'solid',
+		borderBottomWidth: cssLen(p.borderBottomWidth, '1px'),
+		borderBottomColor: p.borderBottomColor || 'transparent',
+		// Padding around the whole bar — grows the nav's height / side insets
+		// without touching the individual item sizing (that's `itemPadding`).
+		padding: p.navPadding || '0'
 	};
 	const listStyle = { gap: cssLen(p.itemGap, '4px') };
 	const linkStyle = (active) => {
@@ -103,73 +145,118 @@ const view = (state, { dispatch }) => {
 		dispatch('NAVIGATE', { key: item.key, title: item.title, navGroup: item.navGroup });
 	};
 
-	// A child dashboard inside a parent's hover popup.
-	const renderChild = (child) => {
-		const active = child.key === current;
+	// A leaf link inside a popup (a dashboard title or one of its children).
+	const renderLink = (item, extraClass) => {
+		const active = onPath(item);
 		return (
-			<li className="mn-popup-item" key={child.key}>
-				<a
-					className={`mn-popup-link${active ? ' mn-popup-link--active' : ''}`}
-					href={`#${child.key}`}
-					title={child.title}
-					aria-current={active ? 'page' : undefined}
-					role="menuitem"
-					style={linkStyle(active)}
-					on-click={onItemClick(child)}
-				>
-					{p.showIcons && child.icon ? (
-						<span className="mn-icon" aria-hidden="true" />
-					) : null}
-					<span className="mn-label">{child.title}</span>
-				</a>
-			</li>
+			<a
+				className={`mn-popup-link${extraClass ? ` ${extraClass}` : ''}${active ? ' mn-popup-link--active' : ''}`}
+				href={`#${item.key}`}
+				title={item.title}
+				aria-current={active ? 'page' : undefined}
+				role="menuitem"
+				style={linkStyle(active)}
+				on-click={onItemClick(item)}
+			>
+				<span className="mn-label">{item.title}</span>
+			</a>
 		);
 	};
 
-	const renderItem = (item) => {
-		const active = item.key === current;
-		const hasChildren = item.children.length > 0;
-		return (
-			<li
-				className={`mn-item${hasChildren ? ' mn-item--has-children' : ''}`}
-				key={item.key}
-			>
-				<a
-					className={`mn-link${active ? ' mn-link--active' : ''}`}
-					href={`#${item.key}`}
-					title={item.title}
-					aria-current={active ? 'page' : undefined}
-					aria-haspopup={hasChildren ? 'true' : undefined}
-					style={linkStyle(active)}
-					on-click={onItemClick(item)}
-				>
-					{p.showIcons && item.icon ? (
-						<span className="mn-icon" aria-hidden="true" />
-					) : null}
-					<span className="mn-label">{item.title}</span>
-					{hasChildren ? (
-						<span className="mn-caret" aria-hidden="true" />
-					) : null}
-				</a>
-				{hasChildren ? (
-					<div className="mn-popup" role="menu" style={popupStyle}>
-						<ul className="mn-popup-list">{item.children.map(renderChild)}</ul>
+	// One dashboard row in a group popup, with its children rendered either
+	// inline (indented sub-list) or as a secondary flyout popup.
+	const renderDashboard = (dash) => {
+		const hasChildren = dash.children.length > 0;
+
+		if (hasChildren && flyout) {
+			const active = onPath(dash);
+			return (
+				<li className="mn-popup-item mn-popup-item--has-children" key={dash.key}>
+					<a
+						className={`mn-popup-link${active ? ' mn-popup-link--active' : ''}`}
+						href={`#${dash.key}`}
+						title={dash.title}
+						aria-current={active ? 'page' : undefined}
+						aria-haspopup="true"
+						role="menuitem"
+						style={linkStyle(active)}
+						on-click={onItemClick(dash)}
+					>
+						<span className="mn-label">{dash.title}</span>
+						<span className="mn-caret mn-caret--side" aria-hidden="true" />
+					</a>
+					<div className="mn-popup mn-popup--sub" role="menu" style={popupStyle}>
+						<ul className="mn-popup-list">{dash.children.map((c) => renderDashboard(c))}</ul>
 					</div>
+				</li>
+			);
+		}
+
+		// Inline mode (or a dashboard with no children): link, then any children
+		// as an indented sub-list in the same popup.
+		return (
+			<li className="mn-popup-item" key={dash.key}>
+				{renderLink(dash)}
+				{hasChildren ? (
+					<ul className="mn-popup-sublist" style={{ borderLeftColor: lineColor }}>
+						{dash.children.map((c) => (
+							<li className="mn-popup-item" key={c.key}>
+								{renderLink(c, 'mn-popup-link--child')}
+							</li>
+						))}
+					</ul>
 				) : null}
 			</li>
 		);
 	};
 
-	const renderGroup = (g, idx) => (
-		<div className="mn-group" key={`g${idx}`}>
-			{p.groupByCategory && p.showGroupLabels && g.label ? (
-				<div className="mn-group-label">{g.label}</div>
-			) : null}
-			<ul className="mn-list" style={listStyle}>
-				{g.items.map(renderItem)}
-			</ul>
-		</div>
-	);
+	// The body of a group popup. Flyout = a single list (children open to the
+	// side). Inline = the dashboards split into columns of `colSize`, so a large
+	// group widens the popup rather than forcing a scroll.
+	const renderGroupPopupBody = (items) => {
+		if (flyout) {
+			return <ul className="mn-popup-list">{items.map(renderDashboard)}</ul>;
+		}
+		const cols = [];
+		for (let i = 0; i < items.length; i += colSize) cols.push(items.slice(i, i + colSize));
+		return (
+			<div className="mn-popup-cols">
+				{cols.map((chunk, ci) => (
+					<ul className="mn-popup-list" key={`col${ci}`}>
+						{chunk.map(renderDashboard)}
+					</ul>
+				))}
+			</div>
+		);
+	};
+
+	// A top-level group: a non-navigable trigger that opens the group popup.
+	const renderGroup = (group) => {
+		const active = anyActive(group.items, current);
+		return (
+			<li className="mn-item mn-item--group mn-item--has-children" key={group.label}>
+				<button
+					type="button"
+					className={`mn-link mn-trigger${active ? ' mn-link--active' : ''}`}
+					aria-haspopup="true"
+					title={group.label}
+					style={linkStyle(active)}
+					// Don't let a mouse click pin focus on the trigger — otherwise
+					// :focus-within keeps this popup open after the pointer moves to
+					// another item. Keyboard Tab focus still works.
+					on-mousedown={(e) => {
+						if (e && e.preventDefault) e.preventDefault();
+					}}
+				>
+					<span className="mn-label">{group.label}</span>
+					<span className="mn-caret" aria-hidden="true" />
+				</button>
+				<div className="mn-popup" role="menu" style={popupStyle}>
+					{renderGroupPopupBody(group.items)}
+				</div>
+			</li>
+		);
+	};
 
 	// Far-left brand lockup: optional image + optional wordmark. Pure presentation
 	// (not clickable) — bind `logoText`/`logoImageUrl` per experience to rebrand.
@@ -209,7 +296,9 @@ const view = (state, { dispatch }) => {
 				{empty ? (
 					<div className="mn-empty">{p.emptyMessage || 'No dashboards configured.'}</div>
 				) : (
-					groups.map(renderGroup)
+					<ul className="mn-list" style={listStyle}>
+						{groups.map(renderGroup)}
+					</ul>
 				)}
 			</div>
 		</nav>
@@ -224,9 +313,9 @@ createCustomElement('x-1295779-metrics-nav-uic', {
 		dashboards: { default: SAMPLE_DASHBOARDS },
 		currentKey: { default: '' },
 		orientation: { default: 'horizontal' },
-		groupByCategory: { default: false },
-		showGroupLabels: { default: true },
-		showIcons: { default: false },
+		childDisplayMode: { default: 'inline' },
+		inlineColumnSize: { default: '8' },
+		childLineColor: { default: '#d1d5db' },
 		itemAlignment: { default: 'center' },
 		showLogo: { default: true },
 		logoText: { default: 'Metrics Portal' },
@@ -241,6 +330,9 @@ createCustomElement('x-1295779-metrics-nav-uic', {
 		activeBackgroundColor: { default: '#2E93fA' },
 		activeTextColor: { default: '#ffffff' },
 		popupBackgroundColor: { default: '#ffffff' },
+		borderBottomColor: { default: 'transparent' },
+		borderBottomWidth: { default: '1px' },
+		navPadding: { default: '0' },
 		itemGap: { default: '4px' },
 		itemRadius: { default: '6px' },
 		itemPadding: { default: '8px 12px' },

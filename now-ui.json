@@ -16,7 +16,7 @@
         {
           "name": "dashboards",
           "label": "Data · Dashboards",
-          "description": "Hierarchical array of active dashboards. Each top-level item is a nav bar entry: { key, title (or name), nav_group, nav_order, icon, active, children }. An item's optional `children` array (sub-dashboards) is shown in a popup when its parent is hovered. Bind to the /nav Data Resource (active dashboards, order by nav_order). Leave empty to show built-in sample items.",
+          "description": "Hierarchical array of active dashboards: { key, title (or name), nav_group, nav_order, icon, active, children }. Dashboards are grouped by `nav_group` — each nav_group becomes a (non-navigable) top-level item whose popup lists its dashboards and their `children`. Dashboards with no nav_group are hidden. Bind to the /nav Data Resource (active dashboards, order by nav_order). Leave empty to show built-in sample items.",
           "fieldType": "json"
         },
         {
@@ -41,25 +41,25 @@
           }
         },
         {
-          "name": "groupByCategory",
-          "label": "Layout · Group by nav group",
-          "description": "Group nav items by their nav_group value. Off = one flat list ordered by nav_order.",
-          "fieldType": "boolean",
-          "defaultValue": false
+          "name": "childDisplayMode",
+          "label": "Layout · Sub-page display",
+          "description": "How a dashboard's sub-pages (children) appear inside a group popup. Inline = always shown, indented beneath their parent. Flyout = the popup shows titles only and children open in a secondary popup on hover.",
+          "fieldType": "choice",
+          "defaultValue": "inline",
+          "typeMetadata": {
+            "variant": "dropdown",
+            "choices": [
+              { "label": "Inline (indented)", "value": "inline" },
+              { "label": "Flyout (secondary popup)", "value": "flyout" }
+            ]
+          }
         },
         {
-          "name": "showGroupLabels",
-          "label": "Layout · Show group labels",
-          "description": "When grouping is on, show the nav_group name as a heading above each group.",
-          "fieldType": "boolean",
-          "defaultValue": true
-        },
-        {
-          "name": "showIcons",
-          "label": "Layout · Show icons",
-          "description": "Show a small marker for items that have an icon set. (Decorative dot; swap for your icon system if desired.)",
-          "fieldType": "boolean",
-          "defaultValue": false
+          "name": "inlineColumnSize",
+          "label": "Layout · Inline column size",
+          "description": "Inline sub-page display only: the maximum number of dashboards shown in one popup column before wrapping to the next column. Larger groups get a wider popup instead of a vertical scroll.",
+          "fieldType": "string",
+          "defaultValue": "8"
         },
         {
           "name": "itemAlignment",
@@ -163,9 +163,37 @@
         {
           "name": "popupBackgroundColor",
           "label": "Style · Popup background",
-          "description": "Background color of the children popup shown when hovering a parent nav item.",
+          "description": "Background color of the group popup (and any secondary sub-page popup).",
           "fieldType": "string",
           "defaultValue": "#ffffff"
+        },
+        {
+          "name": "childLineColor",
+          "label": "Style · Sub-page line color",
+          "description": "Inline sub-page display only: color of the tree line drawn to the left of a dashboard's children. CSS color or \"transparent\" to hide it.",
+          "fieldType": "string",
+          "defaultValue": "#d1d5db"
+        },
+        {
+          "name": "borderBottomColor",
+          "label": "Style · Bottom border color",
+          "description": "Color of the divider line under the nav bar. CSS color or \"transparent\" (default) for no divider.",
+          "fieldType": "string",
+          "defaultValue": "transparent"
+        },
+        {
+          "name": "borderBottomWidth",
+          "label": "Style · Bottom border width",
+          "description": "Thickness of the bottom divider. CSS length; a bare number is treated as pixels.",
+          "fieldType": "string",
+          "defaultValue": "1px"
+        },
+        {
+          "name": "navPadding",
+          "label": "Style · Nav padding",
+          "description": "Padding around the whole nav bar, e.g. \"16px 24px\" or \"20px\". Increases the bar's height and side insets without changing the size of the individual items (use Item padding for that).",
+          "fieldType": "string",
+          "defaultValue": "0"
         },
         {
           "name": "itemGap",

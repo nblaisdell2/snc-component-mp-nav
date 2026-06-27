@@ -80,14 +80,6 @@
 	padding: 0;
 }
 
-.mn-root--horizontal .mn-group-label {
-	font-size: 0.78em;
-	font-weight: 600;
-	text-transform: uppercase;
-	letter-spacing: 0.04em;
-	opacity: 0.55;
-}
-
 /* Vertical: stacked sidebar layout. */
 .mn-root--vertical {
 	display: flex;
@@ -120,16 +112,6 @@
 	list-style: none;
 	margin: 0;
 	padding: 0;
-}
-
-.mn-root--vertical .mn-group-label {
-	font-size: 0.78em;
-	font-weight: 600;
-	text-transform: uppercase;
-	letter-spacing: 0.04em;
-	opacity: 0.55;
-	margin: 6px 0 2px;
-	padding: 0 12px;
 }
 
 .mn-item {
@@ -167,17 +149,14 @@
 	font-weight: 600;
 }
 
-.mn-icon {
-	width: 8px;
-	height: 8px;
-	border-radius: 50%;
-	background: currentColor;
-	flex: 0 0 auto;
-	opacity: 0.7;
-}
-
-.mn-link--active .mn-icon {
-	opacity: 1;
+/* Top-level group trigger: looks like a link but is a non-navigable <button>
+   that only opens the group popup. Reset the native button chrome. */
+.mn-trigger {
+	margin: 0;
+	border: 0;
+	background: transparent;
+	font: inherit;
+	color: inherit;
 }
 
 .mn-empty {
@@ -268,8 +247,16 @@
 	padding: 0;
 }
 
-.mn-popup-item {
+/* Inline mode: a group's dashboards laid out across columns so a large group
+   widens the popup instead of scrolling. Each column is a .mn-popup-list. */
+.mn-popup-cols {
 	display: flex;
+	align-items: flex-start;
+	gap: 4px;
+}
+
+.mn-popup-cols .mn-popup-list {
+	min-width: 180px;
 }
 
 .mn-popup-link {
@@ -296,4 +283,67 @@
 
 .mn-popup-link--active {
 	font-weight: 600;
+}
+
+/* Popup rows stack their (optional) inline children beneath the link, and are
+   the positioning anchor for a flyout sub-popup. */
+.mn-popup-item {
+	display: flex;
+	flex-direction: column;
+	position: relative;
+}
+
+/* ── Inline hierarchy: children indented beneath their parent dashboard ── */
+.mn-popup-sublist {
+	display: flex;
+	flex-direction: column;
+	list-style: none;
+	margin: 2px 0 2px 0;
+	padding-left: 14px;
+	border-left: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.mn-popup-link--child {
+	font-size: 0.92em;
+	opacity: 0.95;
+}
+
+/* ── Flyout hierarchy: children open in a secondary popup to the side ──── */
+
+/* Caret on a flyout parent points to the side (toward where the sub-popup opens). */
+.mn-caret--side {
+	margin-left: auto;
+	border-top: 4px solid transparent;
+	border-bottom: 4px solid transparent;
+	border-left: 4px solid currentColor;
+	border-right: 0;
+}
+
+/* Sub-popup sits to the right of its parent row (override the top/left that the
+   first-level popup rules set on every .mn-popup). */
+.mn-root--horizontal .mn-popup--sub,
+.mn-root--vertical .mn-popup--sub {
+	top: 0;
+	left: 100%;
+	margin: 0 0 0 6px;
+	transform: translateX(-2px);
+}
+
+/* Left-edge hover bridge so the pointer can cross the gap into the sub-popup. */
+.mn-root--horizontal .mn-popup--sub::before,
+.mn-root--vertical .mn-popup--sub::before {
+	top: 0;
+	bottom: 0;
+	right: 100%;
+	left: auto;
+	width: 8px;
+	height: auto;
+}
+
+.mn-popup-item--has-children:hover > .mn-popup--sub,
+.mn-popup-item--has-children:focus-within > .mn-popup--sub {
+	opacity: 1;
+	visibility: visible;
+	pointer-events: auto;
+	transform: translateX(0) translateY(0);
 }

@@ -29,8 +29,8 @@ are `x-1295779-metric-dispatcher-uic` and `x-1295779-metrics-grid-uic`.
 
 ## Files
 
-- `src/x-1295779-metrics-nav-uic/index.js` — properties + the declarative view; `buildModel()`
-  filters active, sorts by `nav_order`, optionally groups by `nav_group`.
+- `src/x-1295779-metrics-nav-uic/index.js` — properties + the declarative view; `buildGroups()`
+  filters active, sorts by `nav_order`, and buckets dashboards by `nav_group` (the top-level items).
 - `src/x-1295779-metrics-nav-uic/sampleData.js` — `SAMPLE_DASHBOARDS` fallback.
 - `src/x-1295779-metrics-nav-uic/styles.scss` — host + horizontal/vertical layouts.
 - `now-ui.json` — UI Builder manifest: every property + the `NAVIGATE` action. **Keep in sync with
@@ -39,10 +39,15 @@ are `x-1295779-metric-dispatcher-uic` and `x-1295779-metrics-grid-uic`.
 ## Data contract
 
 `dashboards` = `[ { key, title|name, nav_group|navGroup, nav_order|navOrder, icon, active, children } ]`.
-`title` falls back to `name`/`label`/`key`; snake_case and camelCase both accepted. The hierarchical
-`/nav` endpoint nests sub-dashboards under each root's `children` array; `normalizeList` normalizes
-them recursively, and a root with children renders them in a hover popup (`renderItem` →
-`.mn-popup`). `NAVIGATE` payload = `{ key, title, navGroup }` for both roots and children.
+`title` falls back to `name`/`label`/`key`; snake_case and camelCase both accepted.
+
+**Top level = `nav_group`.** `buildGroups()` buckets dashboards by `nav_group`; each group is a
+**non-navigable** top-level item (a `.mn-trigger` button) whose popup lists the group's dashboards
+and their `children`. Dashboards with no `nav_group` are **hidden**. The hierarchical `/nav` endpoint
+nests sub-dashboards under each dashboard's `children` array (`normalizeList` normalizes recursively).
+`childDisplayMode` controls how children render in the popup: `'inline'` (indented sub-list, default)
+or `'flyout'` (secondary `.mn-popup--sub` popup). Only dashboards and children fire `NAVIGATE`
+(`{ key, title, navGroup }`) — group triggers never navigate.
 
 ## Build / dev / deploy
 
